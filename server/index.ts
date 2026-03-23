@@ -2,6 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import helmet from "helmet";
+import cors from "cors";
 
 const app = express();
 const httpServer = createServer(app);
@@ -12,15 +14,61 @@ declare module "http" {
   }
 }
 
+// ─── Security: Helmet HTTP headers ─────────────────────────────────────────
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // Handled by Vite in dev, nginx in prod
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
+// ─── Security: CORS — restrict to known origins ────────────────────────────
+const ALLOWED_ORIGINS = [
+  "http://localhost:5000",
+  "http://localhost:3000",
+  "http://0.0.0.0:5000",
+  // Add production domains here when deploying:
+  // "https://hiregenie.yourdomain.com",
+];
+
+// In production, also allow the deployed S3/CDN origins
+if (process.env.ALLOWED_ORIGINS) {
+  ALLOWED_ORIGINS.push(
+    ...process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+  );
+}
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, server-to-server, curl)
+      if (!origin) return callback(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+      // In development, allow all origins for convenience
+      if (process.env.NODE_ENV !== "production") {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// ─── Body parsing with size limits ─────────────────────────────────────────
 app.use(
   express.json({
+    limit: "1mb", // Prevent oversized payloads
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },
-  }),
+  })
 );
 
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 export function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
