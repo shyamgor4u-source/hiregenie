@@ -2,33 +2,20 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import {
   Sparkles,
   ArrowRight,
-  FileSearch,
-  Target,
-  ListFilter,
+  Search,
+  FileText,
   Mail,
-  TrendingUp,
-  Zap,
-  Clock,
-  CheckCircle2,
-  Star,
-  Quote,
 } from "lucide-react";
 
 export default function LandingPage() {
   const { login, user } = useAuth();
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState<string | null>(null);
 
   // Redirect if already logged in
   if (user) {
@@ -42,258 +29,289 @@ export default function LandingPage() {
     return null;
   }
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !password) {
-      toast({ title: "Error", description: "Email and password are required", variant: "destructive" });
-      return;
-    }
-    setIsLoading(true);
+  const handleDemoLogin = async (email: string, password: string, label: string) => {
+    setDemoLoading(label);
     try {
       await login(email, password);
-      toast({ title: "Welcome back!", description: "Logged in successfully" });
+      toast({ title: "Welcome!", description: `Logged in as ${label}` });
     } catch (err: any) {
       toast({ title: "Login failed", description: err.message || "Invalid credentials", variant: "destructive" });
     } finally {
-      setIsLoading(false);
+      setDemoLoading(null);
     }
   };
 
-  const features = [
-    { icon: FileSearch, title: "Resume Parser", desc: "AI extracts skills, experience & education from any resume" },
-    { icon: Target, title: "Job Matching", desc: "Smart matching scores based on skills & experience alignment" },
-    { icon: ListFilter, title: "AI Shortlisting", desc: "Automatically rank and shortlist top candidates" },
-    { icon: Mail, title: "Email Generator", desc: "Auto-generate outreach emails for every hiring stage" },
-    { icon: TrendingUp, title: "Skill Gap Analysis", desc: "Identify skill gaps and get learning recommendations" },
-  ];
-
-  const stats = [
-    { value: "500+", label: "Matches Made", icon: Zap },
-    { value: "10x", label: "Faster Hiring", icon: Clock },
-    { value: "95%", label: "Match Accuracy", icon: CheckCircle2 },
-  ];
-
-  const testimonials = [
-    {
-      quote: "HireGenie reduced our time-to-hire from 45 days to just 8. The AI shortlisting is incredibly accurate.",
-      author: "Sarah Chen",
-      role: "Head of Talent, TechVista",
-    },
-    {
-      quote: "The job matching feature found me a role that perfectly aligned with my skills. Couldn't be happier!",
-      author: "Alex Rivera",
-      role: "Senior Engineer",
-    },
-    {
-      quote: "Managing our hiring pipeline has never been easier. The Kanban view and AI insights are game-changers.",
-      author: "Michael Park",
-      role: "VP Engineering, CloudNine",
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Hero Section — Split Screen */}
-      <div className="min-h-screen flex flex-col lg:flex-row">
-        {/* Left — Branding */}
-        <div className="lg:w-[60%] flex flex-col justify-center px-8 lg:px-16 py-12 lg:py-0 bg-gradient-to-br from-background via-background to-muted">
+    <div className="min-h-screen bg-white">
+      {/* ─── Navbar ─── */}
+      <nav className="w-full bg-white border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center gap-2 mb-12">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <span className="font-display text-2xl font-bold tracking-tight">HireGenie</span>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 bg-violet-600 rounded-lg flex items-center justify-center">
+              <Sparkles className="h-4.5 w-4.5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-gray-900 tracking-tight">HireGenie</span>
           </div>
 
-          {/* Tagline */}
-          <h1 className="font-display text-4xl lg:text-5xl font-bold leading-tight mb-4">
-            Hire in <span className="text-primary">Days</span>,{" "}
-            <br className="hidden lg:block" />
-            Not <span className="text-muted-foreground">Months</span>
+          {/* Center Nav */}
+          <div className="hidden md:flex items-center gap-8">
+            <button
+              onClick={() => navigate("/")}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              Find Jobs
+            </button>
+            <button className="flex items-center gap-1.5 text-sm font-medium text-violet-700 bg-violet-50 px-4 py-1.5 rounded-full">
+              <Sparkles className="h-3.5 w-3.5" />
+              HireGenie Copilot
+            </button>
+          </div>
+
+          {/* Right side */}
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate("/")}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              data-testid="nav-login"
+            >
+              Login
+            </button>
+            <button
+              onClick={() => navigate("/auth")}
+              className="text-sm font-medium text-white bg-violet-600 hover:bg-violet-700 px-5 py-2 rounded-full transition-colors"
+              data-testid="nav-signup"
+            >
+              Sign Up
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── Hero Section ─── */}
+      <section className="pt-20 pb-16 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          {/* Badge */}
+          <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-violet-200 bg-violet-50 mb-8">
+            <span className="text-xs font-semibold uppercase tracking-widest text-violet-700">
+              AI-Powered Hiring Platform for Modern Companies
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 text-gray-900">
+            Replace 70% of{" "}
+            <br className="hidden sm:block" />
+            <span className="text-violet-600">Recruiter Work.</span>
           </h1>
-          <p className="text-lg text-muted-foreground mb-8 max-w-lg">
-            AI-powered hiring platform that automates resume parsing, candidate matching,
-            and pipeline management. Built for modern recruiting teams.
+
+          {/* Subtitle */}
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+            The intelligent assistant that helps recruiters hire faster by automating
+            resume screening, candidate ranking, and outreach.
           </p>
 
-          {/* Stats Row */}
-          <div className="flex flex-wrap gap-6 mb-10">
-            {stats.map((stat) => (
-              <div
-                key={stat.label}
-                className="flex items-center gap-3 bg-card border border-card-border rounded-lg px-5 py-3"
-                data-testid={`stat-${stat.label.toLowerCase().replace(/\s+/g, "-")}`}
-              >
-                <stat.icon className="h-5 w-5 text-primary" />
-                <div>
-                  <p className="text-xl font-bold font-display">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground">{stat.label}</p>
-                </div>
-              </div>
-            ))}
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+            <button
+              onClick={() => navigate("/auth")}
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold rounded-full transition-colors"
+              data-testid="button-try-hiregenie"
+            >
+              Try HireGenie
+              <ArrowRight className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => {
+                const jobsSection = document.getElementById("features-section");
+                jobsSection?.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-full border border-gray-300 transition-colors"
+            >
+              Browse Jobs
+            </button>
           </div>
 
-          {/* Feature Pills */}
-          <div className="flex flex-wrap gap-2">
-            {features.map((f) => (
-              <span
-                key={f.title}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-full border border-border text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
+          {/* Demo Card */}
+          <div className="max-w-md mx-auto bg-violet-50 border border-violet-200 rounded-2xl p-6">
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-700 mb-4">
+              Try the Demo
+            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-3 mb-3">
+              <button
+                onClick={() => handleDemoLogin("candidate@hiregenie.com", "candidate123", "Candidate")}
+                disabled={demoLoading !== null}
+                className="w-full sm:w-auto flex-1 px-5 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-full border border-gray-300 transition-colors disabled:opacity-50"
+                data-testid="button-demo-candidate"
               >
-                <f.icon className="h-3.5 w-3.5" />
-                {f.title}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Right — Login Card */}
-        <div className="lg:w-[40%] flex items-center justify-center p-8 lg:p-12 bg-card/50">
-          <Card className="w-full max-w-md border-card-border bg-card">
-            <CardContent className="p-8">
-              <div className="text-center mb-8">
-                <h2 className="font-display text-xl font-bold mb-2">Welcome Back</h2>
-                <p className="text-sm text-muted-foreground">Sign in to your account</p>
-              </div>
-
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    data-testid="input-email"
-                    className="bg-background"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    data-testid="input-password"
-                    className="bg-background"
-                  />
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full font-medium"
-                  disabled={isLoading}
-                  data-testid="button-login"
-                >
-                  {isLoading ? "Signing in..." : "Access Platform"}
-                  {!isLoading && <ArrowRight className="ml-2 h-4 w-4" />}
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full font-medium border-accent text-accent hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => navigate("/auth")}
-                  data-testid="button-goto-register"
-                >
-                  Create Account
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </form>
-
-              <div className="mt-6 pt-6 border-t border-border">
-                <p className="text-xs text-muted-foreground text-center mb-3">Demo Accounts</p>
-                <div className="space-y-2">
-                  {[
-                    { label: "Admin", email: "admin@hiregenie.com", pass: "admin123" },
-                    { label: "Employer", email: "employer@hiregenie.com", pass: "employer123" },
-                    { label: "Candidate", email: "candidate@hiregenie.com", pass: "candidate123" },
-                  ].map((demo) => (
-                    <button
-                      key={demo.label}
-                      type="button"
-                      onClick={() => {
-                        setEmail(demo.email);
-                        setPassword(demo.pass);
-                      }}
-                      className="w-full text-left px-3 py-2 text-xs rounded-md border border-border hover:border-primary/50 hover:bg-muted transition-colors"
-                      data-testid={`button-demo-${demo.label.toLowerCase()}`}
-                    >
-                      <span className="font-medium">{demo.label}:</span>{" "}
-                      <span className="text-muted-foreground">{demo.email}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* Below Fold — Features */}
-      <section className="py-20 px-8 lg:px-16 bg-muted/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-2xl font-bold mb-3">Powered by AI, Built for Speed</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Every step of the hiring process is enhanced by artificial intelligence,
-              from parsing resumes to ranking candidates.
+                {demoLoading === "Candidate" ? "Logging in..." : "Login as Candidate"}
+              </button>
+              <button
+                onClick={() => handleDemoLogin("employer@hiregenie.com", "employer123", "Employer")}
+                disabled={demoLoading !== null}
+                className="w-full sm:w-auto flex-1 px-5 py-2.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-full transition-colors disabled:opacity-50"
+                data-testid="button-demo-employer"
+              >
+                {demoLoading === "Employer" ? "Logging in..." : "Login as Employer"}
+              </button>
+            </div>
+            <p className="text-xs text-gray-500">
+              Use the Quick Login buttons on the login page for instant access.
             </p>
           </div>
+        </div>
+      </section>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature) => (
-              <Card
-                key={feature.title}
-                className="border-card-border hover:border-primary/30 transition-colors"
-                data-testid={`card-feature-${feature.title.toLowerCase().replace(/\s+/g, "-")}`}
-              >
-                <CardContent className="p-6">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                    <feature.icon className="h-5 w-5 text-primary" />
+      {/* ─── Stats Strip ─── */}
+      <section className="py-16 px-6 bg-white">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          {[
+            { value: "70%", label: "Faster Hiring" },
+            { value: "10x", label: "Resume Processing" },
+            { value: "3x", label: "More Candidates" },
+            { value: "50%", label: "Cost Reduction" },
+          ].map((stat) => (
+            <div key={stat.label}>
+              <p className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-1">{stat.value}</p>
+              <p className="text-sm text-gray-500 font-medium">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ─── Dark Feature Section — Why AI Copilot? ─── */}
+      <section id="features-section" className="bg-gray-900 py-20 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-16 items-center">
+          {/* Left — features */}
+          <div className="lg:w-1/2">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-12 italic font-serif">
+              Why AI Copilot?
+            </h2>
+
+            <div className="space-y-8">
+              {[
+                {
+                  icon: Search,
+                  title: "Find Relevant Candidates",
+                  desc: "Searches across sources like LinkedIn, GitHub, and developer communities to produce a ranked list.",
+                },
+                {
+                  icon: FileText,
+                  title: "AI Resume Screening",
+                  desc: "Upload 100s of resumes and get instant fitment analysis. Save 3-4 hours per role.",
+                },
+                {
+                  icon: Mail,
+                  title: "Automatic Outreach",
+                  desc: "Generate personalized messages for candidates instantly to increase response rates.",
+                },
+              ].map((feature) => (
+                <div key={feature.title} className="flex gap-4">
+                  <div className="flex-shrink-0 h-12 w-12 bg-violet-600/20 rounded-xl flex items-center justify-center">
+                    <feature.icon className="h-5 w-5 text-violet-400" />
                   </div>
-                  <h3 className="font-display font-semibold mb-2">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.desc}</p>
-                </CardContent>
-              </Card>
-            ))}
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-1">{feature.title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{feature.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — dark card mockup */}
+          <div className="lg:w-1/2 flex justify-center">
+            <div className="w-full max-w-sm bg-gray-800 rounded-2xl p-6 border border-gray-700">
+              {/* Skeleton header */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-10 w-10 bg-gray-600 rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-3 bg-gray-700 rounded w-3/4" />
+                  <div className="h-2.5 bg-gray-700 rounded w-1/2" />
+                </div>
+              </div>
+
+              {/* Skeleton lines */}
+              <div className="space-y-3 mb-6">
+                <div className="h-3 bg-gray-700 rounded w-full" />
+                <div className="h-3 bg-gray-700 rounded w-5/6" />
+                <div className="h-3 bg-gray-700 rounded w-4/6" />
+              </div>
+
+              {/* Skills row */}
+              <div className="flex gap-2 mb-6">
+                <div className="h-6 bg-gray-700 rounded-full w-16" />
+                <div className="h-6 bg-gray-700 rounded-full w-20" />
+                <div className="h-6 bg-gray-700 rounded-full w-14" />
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-gray-700 pt-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-gray-500 mb-0.5">Match Score</p>
+                  <p className="text-green-400 font-bold text-lg">94%</p>
+                </div>
+                <button className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors">
+                  Shortlist
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 px-8 lg:px-16">
+      {/* ─── Footer ─── */}
+      <footer className="bg-gray-50 border-t border-gray-200 pt-12 pb-6 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="font-display text-2xl font-bold mb-3">What Our Users Say</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 mb-10">
+            {/* Brand column */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="h-7 w-7 bg-violet-600 rounded-lg flex items-center justify-center">
+                  <Sparkles className="h-3.5 w-3.5 text-white" />
+                </div>
+                <span className="text-lg font-bold text-gray-900">HireGenie</span>
+              </div>
+              <p className="text-sm text-gray-500 leading-relaxed">
+                The AI-powered assistant for modern recruiters. Hire faster, smarter, and better.
+              </p>
+            </div>
+
+            {/* Platform column */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 mb-3">Platform</h4>
+              <ul className="space-y-2">
+                {["Browse Jobs", "Companies", "Pricing"].map((link) => (
+                  <li key={link}>
+                    <span className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer transition-colors">
+                      {link}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Support column */}
+            <div>
+              <h4 className="text-sm font-bold text-gray-900 mb-3">Support</h4>
+              <ul className="space-y-2">
+                {["Help Center", "Contact Us", "Privacy Policy"].map((link) => (
+                  <li key={link}>
+                    <span className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer transition-colors">
+                      {link}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testimonials.map((t, i) => (
-              <Card key={i} className="border-card-border">
-                <CardContent className="p-6">
-                  <Quote className="h-5 w-5 text-primary/40 mb-3" />
-                  <p className="text-sm text-foreground mb-4 italic">"{t.quote}"</p>
-                  <div className="flex items-center gap-2">
-                    <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {t.author.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{t.author}</p>
-                      <p className="text-xs text-muted-foreground">{t.role}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+          {/* Divider */}
+          <div className="border-t border-gray-200 pt-6 text-center">
+            <p className="text-xs text-gray-400">&copy; 2026 HireGenie. All rights reserved.</p>
           </div>
         </div>
-      </section>
+      </footer>
 
       <PerplexityAttribution />
     </div>
