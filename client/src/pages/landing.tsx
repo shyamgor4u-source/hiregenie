@@ -71,7 +71,7 @@ export default function LandingPage() {
           {/* Right side */}
           <div className="flex items-center gap-4">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/auth")}
               className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
               data-testid="nav-login"
             >
