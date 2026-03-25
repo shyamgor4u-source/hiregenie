@@ -19,19 +19,29 @@ app.use(
   helmet({
     contentSecurityPolicy: false, // Handled by Vite in dev, nginx in prod
     crossOriginEmbedderPolicy: false,
+    frameguard: false, // Allow iframe embedding (Perplexity hosting)
   })
 );
 
 // ─── Security: CORS — restrict to known origins ────────────────────────────
+// Since HireGenie serves frontend + API from the same Express server,
+// same-origin requests (no Origin header) are always allowed.
+// For cross-origin (iframe embeds, CDN frontends), we maintain an allowlist.
 const ALLOWED_ORIGINS = [
   "http://localhost:5000",
   "http://localhost:3000",
   "http://0.0.0.0:5000",
-  // Add production domains here when deploying:
+  // Add your production domain(s) here when self-hosting:
   // "https://hiregenie.yourdomain.com",
 ];
 
-// In production, also allow the deployed S3/CDN origins
+// Allow Perplexity hosting domains (iframe embed)
+const ALLOWED_ORIGIN_PATTERNS = [
+  /\.pplx\.app$/,
+  /\.perplexity\.ai$/,
+];
+
+// In production, also allow the deployed S3/CDN origins via env var
 if (process.env.ALLOWED_ORIGINS) {
   ALLOWED_ORIGINS.push(
     ...process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
@@ -41,11 +51,19 @@ if (process.env.ALLOWED_ORIGINS) {
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, server-to-server, curl)
+      // Allow requests with no origin (same-origin, mobile apps, server-to-server, curl)
       if (!origin) return callback(null, true);
+      // Check exact match
       if (ALLOWED_ORIGINS.includes(origin)) {
         return callback(null, true);
       }
+      // Check pattern match (hosting platforms)
+      try {
+        const hostname = new URL(origin).hostname;
+        if (ALLOWED_ORIGIN_PATTERNS.some((p) => p.test(hostname))) {
+          return callback(null, true);
+        }
+      } catch { /* invalid URL, reject */ }
       // In development, allow all origins for convenience
       if (process.env.NODE_ENV !== "production") {
         return callback(null, true);
